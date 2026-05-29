@@ -1,3 +1,8 @@
+from dataclasses import replace
+from pathlib import Path
+
+from orphan_radar.core.pipeline import run_eval, run_scan
+from orphan_radar.core.settings import RadarSettings
 from orphan_radar.rank.information_gain import (
     candidate_information_gain,
     entropy_from_scores,
@@ -165,3 +170,100 @@ def test_empty_scores_returns_zero_metrics():
     assert result.entropy_after == 0.0
     assert result.information_gain == 0.0
     assert result.candidate_boost == 0.0
+
+
+# --------------------------------------------------------------------------- #
+# Behavior tests: information_gain must not break a reconstruction the ranker
+# can already solve, and must produce reviewable evidence.
+# --------------------------------------------------------------------------- #
+
+
+def _topical_corpus(src: Path) -> None:
+    """Two topically separable clusters with a recoverable inter-cluster link."""
+    src.mkdir()
+    (src / 'Agent Reliability.md').write_text(
+        '# Agent Reliability\nAgent timeout memory reliability failures retries. '
+        '[[Testing Strategy]] [[Timeout Memory]]',
+        encoding='utf-8',
+    )
+    (src / 'Testing Strategy.md').write_text(
+        '# Testing Strategy\nLong running tests timeout command reliability retries. '
+        '[[Agent Reliability]] [[Timeout Memory]]',
+        encoding='utf-8',
+    )
+    (src / 'Timeout Memory.md').write_text(
+        '# Timeout Memory\nTimeout memory retries reliability for long running agent tests. '
+        '[[Agent Reliability]]',
+        encoding='utf-8',
+    )
+    (src / 'Pasta Recipes.md').write_text(
+        '# Pasta Recipes\nTomato basil garlic olive oil simmer sauce noodles. [[Dessert Ideas]]',
+        encoding='utf-8',
+    )
+    (src / 'Dessert Ideas.md').write_text(
+        '# Dessert Ideas\nChocolate cake sugar vanilla cream baking oven. [[Pasta Recipes]]',
+        encoding='utf-8',
+    )
+
+
+def test_information_gain_does_not_regress_a_recoverable_reconstruction(tmp_path: Path):
+    """Sanity guard: enabling information_gain must not silently break ranking.
+
+    Compares link-reconstruction on the same topical corpus with the feature
+    enabled at the default weight (0.08) vs disabled (0.0). The recoverable
+    held-out link should still be recoverable in the top 5 with the feature
+    enabled; recall@5 must not drop and MRR must remain positive.
+    """
+    src = tmp_path / 'notes'
+    out_with = tmp_path / 'eval_with'
+    out_without = tmp_path / 'eval_without'
+    _topical_corpus(src)
+
+    with_gain = RadarSettings()  # default weight 0.08
+    without_gain = replace(RadarSettings(), information_gain=0.0)
+
+    with_report = run_eval(src, out_with, settings=with_gain, holdout_ratio=0.30)
+    without_report = run_eval(src, out_without, settings=without_gain, holdout_ratio=0.30)
+
+    with_lr = with_report['link_reconstruction']
+    without_lr = without_report['link_reconstruction']
+
+    # Baseline ranker can recover the topical link.
+    assert without_lr['recall_at_5'] > 0.0
+    assert without_lr['mean_reciprocal_rank'] > 0.0
+    # Enabling information_gain must not drop recall@5 below the baseline.
+    assert with_lr['recall_at_5'] >= without_lr['recall_at_5']
+    # And must keep MRR positive (i.e. the held-out link is still found).
+    assert with_lr['mean_reciprocal_rank'] > 0.0
+
+
+def test_information_gain_surfaces_reviewable_metrics_in_scan_output(tmp_path: Path):
+    """Evidence packets and candidate edges must carry the new entropy fields."""
+    src = tmp_path / 'notes'
+    out = tmp_path / 'out'
+    _topical_corpus(src)
+
+    summary = run_scan(src, out, RadarSettings())
+    assert summary.source_files_mutated is False
+    assert summary.candidate_edges_generated >= 1
+
+    import json
+    with (out / 'candidate_edges.jsonl').open(encoding='utf-8') as f:
+        edges = [json.loads(line) for line in f]
+
+    assert edges, 'expected at least one candidate edge'
+    required_keys = {
+        'information_gain',
+        'community_entropy_before',
+        'community_entropy_after',
+        'candidate_entropy_boost',
+    }
+    for edge in edges:
+        assert required_keys <= set(edge['metrics']), (
+            f"missing entropy keys on candidate edge: "
+            f"{required_keys - set(edge['metrics'])}"
+        )
+        # The feature is bounded.
+        assert 0.0 <= edge['metrics']['information_gain'] <= 1.0
+        assert edge['metrics']['community_entropy_before'] >= 0.0
+        assert edge['metrics']['community_entropy_after'] >= 0.0
