@@ -26,6 +26,7 @@ WEIGHT_FIELDS = (
     'local_authority',
     'specificity',
     'route_coherence',
+    'information_gain',
     'hub_penalty',
 )
 
@@ -183,7 +184,7 @@ def _rank_of_target(
         edge, _ = score_candidate(
             note, target, cid, world.communities, world.hybrid_graph,
             world.notes_by_id, world.tfidf_matrix, world.vectorizer,
-            world.node_to_community, settings,
+            world.node_to_community, settings, community_scores=community_scores,
         )
         scored.append((edge.score, target.note_id))
     scored.sort(key=lambda x: (-x[0], x[1]))

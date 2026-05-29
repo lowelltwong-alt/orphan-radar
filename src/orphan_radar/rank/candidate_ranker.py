@@ -7,6 +7,7 @@ from orphan_radar.core.models import CandidateEdge, EvidencePacket, NoteRecord
 from orphan_radar.core.settings import RadarSettings
 from orphan_radar.graph.hub_penalty import compute_hub_metrics, clamp
 from orphan_radar.parse.tokens import jaccard, overlap_terms
+from orphan_radar.rank.information_gain import candidate_information_gain
 
 
 def confidence_label(score: float) -> str:
@@ -65,6 +66,7 @@ def score_candidate(
     node_to_community: dict[str, int],
     settings: RadarSettings,
     rank: int = 0,
+    community_scores: dict[int, float] | None = None,
 ) -> tuple[CandidateEdge, EvidencePacket]:
     s_idx = graph.nodes[source.note_id]['index']
     t_idx = graph.nodes[target.note_id]['index']
@@ -77,6 +79,20 @@ def score_candidate(
     hub = compute_hub_metrics(target.note_id, graph, notes_by_id, tfidf_matrix, vectorizer, node_to_community, settings)
     specificity = hub.specificity
     route_coherence = 1.0 if target_community_id is not None and node_to_community.get(target.note_id) == target_community_id else 0.0
+    pre_information_signal = clamp(
+        0.30 * title_similarity
+        + 0.35 * content_similarity
+        + 0.15 * tag_similarity
+        + 0.10 * folder
+        + 0.10 * specificity
+    )
+    information = candidate_information_gain(
+        community_scores,
+        target_community_id,
+        pre_information_signal,
+        settings.entropy_temperature,
+        settings.information_gain_boost,
+    )
 
     raw_score = (
         settings.title_similarity * title_similarity
@@ -86,6 +102,7 @@ def score_candidate(
         + settings.local_authority * authority
         + settings.specificity * specificity
         + settings.route_coherence * route_coherence
+        + settings.information_gain * information.information_gain
         - settings.hub_penalty * hub.hub_penalty
     )
     score = clamp(raw_score * length_regularizer(source, settings))
@@ -101,6 +118,8 @@ def score_candidate(
         reasons.append('folder proximity signal')
     if authority > 0.4:
         reasons.append('target has local graph authority')
+    if information.information_gain > 0.05:
+        reasons.append('link reduces community assignment uncertainty')
     if hub.hub_penalty < 0.35:
         reasons.append('target is a specific authority, not a generic hub')
     else:
@@ -116,6 +135,10 @@ def score_candidate(
         'local_authority': authority,
         'specificity': specificity,
         'route_coherence': route_coherence,
+        'information_gain': information.information_gain,
+        'community_entropy_before': information.entropy_before,
+        'community_entropy_after': information.entropy_after,
+        'candidate_entropy_boost': information.candidate_boost,
         'hub_penalty': hub.hub_penalty,
         'score': score,
     }
