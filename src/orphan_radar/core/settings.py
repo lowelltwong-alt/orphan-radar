@@ -20,7 +20,11 @@ class RadarSettings:
     local_authority: float = 0.10
     specificity: float = 0.12
     route_coherence: float = 0.10
+    information_gain: float = 0.08
     hub_penalty: float = 0.10
+
+    entropy_temperature: float = 0.25
+    information_gain_boost: float = 0.35
 
     similarity_edge_threshold: float = 0.22
     similarity_top_k: int = 5
@@ -60,7 +64,9 @@ class RadarSettings:
         'title_similarity': (0.0, 1.0), 'content_similarity': (0.0, 1.0),
         'tag_similarity': (0.0, 1.0), 'folder_proximity': (0.0, 1.0),
         'local_authority': (0.0, 1.0), 'specificity': (0.0, 1.0),
-        'route_coherence': (0.0, 1.0), 'hub_penalty': (0.0, 1.0),
+        'route_coherence': (0.0, 1.0), 'information_gain': (0.0, 1.0),
+        'hub_penalty': (0.0, 1.0), 'entropy_temperature': (0.000001, 10.0),
+        'information_gain_boost': (0.0, 5.0),
         'similarity_edge_threshold': (0.0, 1.0), 'implicit_edge_weight': (0.0, 5.0),
         'explicit_edge_weight': (0.0, 5.0), 'weak_orphan_coherence_threshold': (0.0, 1.0),
         'min_candidate_score': (0.0, 1.0), 'strong_candidate_threshold': (0.0, 1.0),

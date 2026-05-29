@@ -67,7 +67,7 @@ def run_scan(source_dir: Path, output_dir: Path, settings: RadarSettings | None 
             cid = node_to_community.get(target.note_id)
             edge, evidence = score_candidate(
                 note, target, cid, communities, hybrid_graph, notes_by_id, tfidf_matrix,
-                vectorizer, node_to_community, settings
+                vectorizer, node_to_community, settings, community_scores=community_scores
             )
             if passes_quality_gate(edge, evidence, settings):
                 scored.append((edge, evidence))
