@@ -42,7 +42,12 @@ versions are not yet tagged.
   validate per-corpus with the link-reconstruction eval before relying on
   any tuned vector.
 - Calibration's `improved: true` on small corpora (single-edge holdouts)
-  is single-seed noise. Multi-seed validation is a planned follow-up.
+  is single-seed noise. A sensitivity sweep + multi-seed study now
+  documents this empirically: see `docs/INFORMATION_GAIN_SENSITIVITY.md`
+  and `scripts/sweep_information_gain.py`. On the demo corpus the feature is
+  **inert at defaults** (identical reconstruction on/off, 30/30 seeds tied)
+  and only ever *degrades* MRR when over-weighted, so keep the weight low and
+  do not adopt calibrated weights from a corpus this small.
 
 ### Internal
 
