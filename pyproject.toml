@@ -53,4 +53,22 @@ select = ["E4", "E7", "E9", "F"]
 python_version = "3.11"
 ignore_missing_imports = true
 warn_unused_ignores = true
+# Required for the per-module `follow_imports` override below to apply to
+# stub files. Without it mypy parses the .pyi regardless of the override.
+follow_imports_for_stubs = true
 # Aspiration: tighten toward `strict = true` module-by-module (see ROADMAP).
+
+[[tool.mypy.overrides]]
+# Skip third-party stubs rather than parsing them. numpy 2.5 ships stubs
+# written with PEP 695 `type` statements, which mypy rejects while targeting
+# python_version 3.11 -- a dependency-side change that failed the build on a
+# tree with no numpy annotations of its own. `ignore_missing_imports` above
+# already treats these packages as Any when absent, so skipping their stubs
+# when present just makes the two cases agree.
+#
+# Scoped to these four packages on purpose: a global `follow_imports = "skip"`
+# would also apply to first-party imports. Cross-module checking inside
+# orphan_radar is unaffected -- verified against a two-module fixture where the
+# override still reports incompatible argument types across a module boundary.
+module = ["numpy.*", "scipy.*", "sklearn.*", "networkx.*"]
+follow_imports = "skip"
