@@ -1,5 +1,9 @@
 # Orphan Radar
 
+[![CI](https://github.com/lowelltwong-alt/orphan-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/lowelltwong-alt/orphan-radar/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
+
 Orphan Radar is a **local-first knowledge-graph maintenance engine**.
 
 It scans a folder of Markdown/text notes, detects hard and weak orphan notes, assigns them to likely graph communities, ranks candidate target notes, detects bridge candidates, and writes a human-reviewable report.

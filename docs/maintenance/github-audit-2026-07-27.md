@@ -20,10 +20,10 @@ apply it — including for the 17 private repos — when run with your own `gh` 
 
 ```bash
 gh auth login                                   # needs `repo` scope
-./scripts/gh_branch_cleanup.sh                  # dry run across every repo
-./scripts/gh_branch_cleanup.sh --apply          # delete merged branches
-./scripts/gh_archive_plan.sh                    # dry run, tier-1 archives
-./scripts/gh_archive_plan.sh --apply            # archive them
+./scripts/maintenance/gh_branch_cleanup.sh                  # dry run across every repo
+./scripts/maintenance/gh_branch_cleanup.sh --apply          # delete merged branches
+./scripts/maintenance/gh_archive_plan.sh                    # dry run, tier-1 archives
+./scripts/maintenance/gh_archive_plan.sh --apply            # archive them
 ```
 
 The cleanup script re-derives merge status live rather than trusting the table

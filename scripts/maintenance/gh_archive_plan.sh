@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Apply the archive recommendations from docs/github-audit-2026-07-27.md.
+# Apply the archive recommendations from docs/maintenance/github-audit-2026-07-27.md.
 #
-#   ./scripts/gh_archive_plan.sh            # dry run, show what would change
-#   ./scripts/gh_archive_plan.sh --apply    # archive the tier-1 repos
-#   ./scripts/gh_archive_plan.sh --tier 2 --apply
+#   ./scripts/maintenance/gh_archive_plan.sh            # dry run, show what would change
+#   ./scripts/maintenance/gh_archive_plan.sh --apply    # archive the tier-1 repos
+#   ./scripts/maintenance/gh_archive_plan.sh --tier 2 --apply
 #
 # Archiving is reversible: `gh repo unarchive OWNER/NAME` restores write access.
 # An archived repo stays visible and cloneable; it just becomes read-only.
@@ -38,15 +38,16 @@ Bi-Test|scratch/test repo; idle 41d
 All-Law-Firm-Talent-Intel|superseded by the two newer talent repos; idle 34d
 lowell-career-os|23 KB personal scratch; idle 54d
 noesis-atlas|6-commit public scaffold, no development since; idle 59d
+fmg-fractal-capability-ontology|private; vocabulary superseded by semantic-substrate + logos-governance-architecture; owner approved retirement 2026-07-27
 "
 
-# Tier 2 -- resolved in docs/github-archive-decisions-2026-07-27.md.
-# Each entry has a PRECONDITION. Do not batch these with tier 1.
-#   KEEP (removed from this list): LawFirm-os-talent-intelligence, 
+# Tier 2 -- resolved in docs/maintenance/github-archive-decisions-2026-07-27.md.
+# Remaining entry has a PRECONDITION. Do not batch it with tier 1.
+#   KEEP (removed from this list): LawFirm-os-talent-intelligence,
 #   airca-fractal-decision-architecture, logos-doctrine-genealogy
+#   MOVED to tier 1: fmg-fractal-capability-ontology (owner approved 2026-07-27)
 TIER2="
 LawFirm-Talent-Intel-ATS|0 PRs, 25-minute lifespan -- PRECONDITION: diff its tree against LawFirm-os-talent-intelligence first
-fmg-fractal-capability-ontology|44 PRs but superseded vocabulary -- PRECONDITION: confirm terms exist in semantic-substrate or logos-governance-architecture
 "
 
 case "$TIER" in

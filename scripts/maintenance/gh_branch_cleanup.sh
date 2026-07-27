@@ -3,9 +3,9 @@
 #
 # Safe by default: prints the plan and changes nothing until you pass --apply.
 #
-#   ./scripts/gh_branch_cleanup.sh              # dry run, all repos
-#   ./scripts/gh_branch_cleanup.sh --apply      # actually delete
-#   ./scripts/gh_branch_cleanup.sh --repo orphan-radar --apply
+#   ./scripts/maintenance/gh_branch_cleanup.sh              # dry run, all repos
+#   ./scripts/maintenance/gh_branch_cleanup.sh --apply      # actually delete
+#   ./scripts/maintenance/gh_branch_cleanup.sh --repo orphan-radar --apply
 #
 # Requires: gh (authenticated with `repo` scope), jq.
 #

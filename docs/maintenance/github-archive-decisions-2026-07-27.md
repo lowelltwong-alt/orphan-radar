@@ -104,6 +104,12 @@ which is why the check is a precondition rather than a nicety.
 
 **Confidence: medium-low.** Do not execute this one blind.
 
+**Owner decision 2026-07-27: retire it.** The owner approved archiving without
+the supersession check; that decision supersedes the precondition above. The
+repo is private, so archiving has no public-facing effect. Moved to tier 1 in
+`gh_archive_plan.sh`. Rollback remains one command:
+`gh repo unarchive lowelltwong-alt/fmg-fractal-capability-ontology`.
+
 ## 3. `airca-fractal-decision-architecture` — do not archive
 
 **Recommendation: keep. Add a status line to the README instead.** This reverses
@@ -203,8 +209,9 @@ routes through the registry, not through a cleanup sweep.
 | 3 | `airca-fractal-decision-architecture` | **keep** + README status line | high |
 | 4 | `logos-doctrine-genealogy` | **keep** — answer issue #4 | high |
 
-Net: tier 1 stays at 6 repos; these decisions add `LawFirm-Talent-Intel-ATS` and
-`fmg-fractal-capability-ontology` for **8 total archives**, and confirm three keeps.
+Net: tier 1 is now 7 repos (fmg moved in by owner decision 2026-07-27);
+`LawFirm-Talent-Intel-ATS` remains gated on its tree diff, for **8 total
+archives**, and three keeps are confirmed.
 
 **Fresh-eyes review flag:** the two medium-confidence calls (ATS, fmg) rest
 entirely on metadata for repos this session could not read. Both carry a
