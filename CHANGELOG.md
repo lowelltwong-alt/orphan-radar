@@ -7,6 +7,18 @@ versions are not yet tagged.
 
 ## Unreleased
 
+### Fixed
+
+- **CI no longer breaks when a linter releases.** The lint rule set is now
+  declared explicitly (`[tool.ruff.lint] select = ["E4", "E7", "E9", "F"]`)
+  instead of inheriting ruff's defaults, which widened in a newer release and
+  turned CI red on an unchanged tree. Upper bounds added to `ruff` and `mypy`.
+- **mypy no longer parses third-party stubs targeting a newer Python.**
+  numpy 2.5 ships PEP 695 `type` statements in its stubs; with
+  `python_version = "3.11"` mypy rejected them. Stubs for
+  numpy/scipy/sklearn/networkx are now skipped via a scoped override plus
+  `follow_imports_for_stubs`; first-party cross-module checking is unaffected.
+
 ### Added
 
 - **Shannon-style information-gain signal in candidate ranking.** A bounded,
