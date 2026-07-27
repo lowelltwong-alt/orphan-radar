@@ -20,8 +20,11 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",
-  "ruff>=0.5",
-  "mypy>=1.8"
+  # Upper bounds on the linters: an unbounded `ruff>=0.5` turned CI red on an
+  # unchanged tree when a new release widened ruff's default rule set. Raise
+  # these deliberately, with the lint config below reviewed in the same change.
+  "ruff>=0.5,<0.16",
+  "mypy>=1.8,<2"
 ]
 
 [project.scripts]
@@ -36,6 +39,15 @@ addopts = "-q"
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint]
+# State the rule set explicitly rather than inheriting ruff's defaults, which
+# have widened across releases (a newer ruff added I, UP, SIM, FURB and RUF
+# findings to this unchanged tree and broke CI). With `select` pinned here,
+# lint results depend on this file rather than on the installed ruff version.
+# These four are ruff's historical defaults: pyflakes plus the pycodestyle
+# error subsets.
+select = ["E4", "E7", "E9", "F"]
 
 [tool.mypy]
 python_version = "3.11"
