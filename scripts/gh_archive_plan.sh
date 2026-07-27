@@ -40,12 +40,13 @@ lowell-career-os|23 KB personal scratch; idle 54d
 noesis-atlas|6-commit public scaffold, no development since; idle 59d
 "
 
-# Tier 2 -- needs a decision before archiving. See the audit doc.
+# Tier 2 -- resolved in docs/github-archive-decisions-2026-07-27.md.
+# Each entry has a PRECONDITION. Do not batch these with tier 1.
+#   KEEP (removed from this list): LawFirm-os-talent-intelligence, 
+#   airca-fractal-decision-architecture, logos-doctrine-genealogy
 TIER2="
-fmg-fractal-capability-ontology|dormant 54d; archive unless the FMG line is resuming
-LawFirm-os-talent-intelligence|overlaps LawFirm-Talent-Intel-ATS -- keep ONE, archive the other
-airca-fractal-decision-architecture|110 commits, 2 stars, dormant 54d; archive only if the AIRCA line is finished
-logos-doctrine-genealogy|scaffold-only; resolve open issue #4 first, then build or archive
+LawFirm-Talent-Intel-ATS|0 PRs, 25-minute lifespan -- PRECONDITION: diff its tree against LawFirm-os-talent-intelligence first
+fmg-fractal-capability-ontology|44 PRs but superseded vocabulary -- PRECONDITION: confirm terms exist in semantic-substrate or logos-governance-architecture
 "
 
 case "$TIER" in
