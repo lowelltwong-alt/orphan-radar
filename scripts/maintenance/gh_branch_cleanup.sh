@@ -41,7 +41,7 @@ command -v jq >/dev/null || { echo "jq not found" >&2; exit 1; }
 [ "$APPLY" -eq 1 ] || echo "== DRY RUN == (re-run with --apply to delete)"
 echo
 
-deleted=0; kept=0; skipped=0
+deleted=0; kept=0; skipped=0; failed=0; skipped_repos=0
 
 if [ -n "$ONLY_REPO" ]; then
   repos="$ONLY_REPO"
@@ -55,8 +55,14 @@ for repo in $repos; do
   default=$(jq -r .default_branch <<<"$meta")
 
   # Branch names that currently have an OPEN PR -- never touch these.
-  open_heads=$(gh api "repos/$OWNER/$repo/pulls?state=open&per_page=100" \
-                 --jq '.[].head.ref' 2>/dev/null | sort -u)
+  # Paginated, and fail closed: if this inventory cannot be fetched in full,
+  # skip the entire repository rather than risk deleting an open-PR branch
+  # that a partial or empty listing failed to protect.
+  if ! open_heads=$(gh api "repos/$OWNER/$repo/pulls?state=open&per_page=100" \
+                      --paginate --jq '.[].head.ref' 2>/dev/null | sort -u); then
+    echo "!! cannot list open PRs for $repo -- skipping repo (fail closed)"
+    skipped_repos=$((skipped_repos+1)); continue
+  fi
 
   branches=$(gh api "repos/$OWNER/$repo/branches?per_page=100" --paginate \
                --jq '.[] | select(.protected|not) | .name' 2>/dev/null)
@@ -92,10 +98,13 @@ for repo in $repos; do
 
     if [ "$APPLY" -eq 1 ]; then
       if gh api -X DELETE "repos/$OWNER/$repo/git/refs/heads/$br" >/dev/null 2>&1; then
-        echo "      deleted (restore: git push origin ${sha}:refs/heads/$br)"
+        # Restore via the create-ref API: works from any directory, names the
+        # repo explicitly, and needs no local copy of the commit.
+        echo "      deleted (restore: gh api -X POST repos/$OWNER/$repo/git/refs -f ref=refs/heads/$br -f sha=$sha)"
         deleted=$((deleted+1))
       else
         echo "      FAILED to delete"
+        failed=$((failed+1))
       fi
     else
       deleted=$((deleted+1))
@@ -108,3 +117,8 @@ echo "-----"
 if [ "$APPLY" -eq 1 ]; then echo "deleted:        $deleted"; else echo "would delete:   $deleted"; fi
 echo "left (unmerged): $kept"
 echo "skipped (open PR): $skipped"
+[ "$skipped_repos" -gt 0 ] && echo "repos skipped (PR inventory unavailable): $skipped_repos"
+if [ "$failed" -gt 0 ] || [ "$skipped_repos" -gt 0 ]; then
+  echo "INCOMPLETE: $failed deletion(s) failed, $skipped_repos repo(s) skipped -- rerun after fixing"
+  exit 1
+fi

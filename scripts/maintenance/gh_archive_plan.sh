@@ -60,11 +60,11 @@ esac
 echo "Tier $TIER archive plan for $OWNER:"
 echo
 
-n=0
+n=0; ok=0; failed=0
 while IFS='|' read -r name why; do
   [ -z "$name" ] && continue
   state=$(gh api "repos/$OWNER/$name" --jq 'if .archived then "already-archived" else "active" end' 2>/dev/null) \
-    || { printf '  %-42s !! cannot read\n' "$name"; continue; }
+    || { printf '  %-42s !! cannot read\n' "$name"; failed=$((failed+1)); continue; }
 
   if [ "$state" = "already-archived" ]; then
     printf '  %-42s already archived, skipping\n' "$name"
@@ -77,14 +77,24 @@ while IFS='|' read -r name why; do
   if [ "$APPLY" -eq 1 ]; then
     if gh repo archive "$OWNER/$name" --yes >/dev/null 2>&1; then
       echo "      archived (undo: gh repo unarchive $OWNER/$name)"
+      ok=$((ok+1))
     else
       echo "      FAILED to archive"
+      failed=$((failed+1))
     fi
   fi
 done <<<"$LIST"
 
 echo
-if [ "$APPLY" -eq 1 ]; then echo "archived: $n"; else echo "would archive: $n"; fi
+if [ "$APPLY" -eq 1 ]; then
+  echo "archived: $ok of $n planned"
+else
+  echo "would archive: $n"
+fi
+if [ "$failed" -gt 0 ]; then
+  echo "INCOMPLETE: $failed repo(s) failed or unreadable -- rerun after fixing auth/rate limits"
+  exit 1
+fi
 
 # Never archive: lowelltwong-alt -- that is the GitHub profile README repo.
 # Archiving it greys out the profile header on your public profile page.
